@@ -46,10 +46,8 @@ func run() int {
 	// Wait for signal
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGTERM, os.Interrupt)
-	select {
-	case sig := <-sigCh:
-		log.Printf("received %v signal. this server will shutdown gracefully.", sig)
-	}
+	sig := <-sigCh
+	log.Printf("received %v signal. this server will shutdown gracefully.", sig)
 
 	// shutdown server gracefully
 	ctxTimeout, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -69,6 +67,8 @@ func testHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		time.Sleep(5 * time.Second)
 		w.WriteHeader(200)
-		w.Write([]byte("Hello world!\n"))
+		if _, err := w.Write([]byte("Hello world!\n")); err != nil {
+			log.Printf("Write response data error: %v", err)
+		}
 	})
 }
